@@ -59,21 +59,17 @@ parseNum = do
   parseMB
   return (ScmNumber num)
   where
-    plus :: GenParser Char st String
     plus = char '+' *> number
-
-    minus :: GenParser Char st String
     minus = (:) <$> char '-' <*> number
-
-    number :: GenParser Char st String
     number = many1 digit
 
--- Parsing Mid breaks within the file (In terms of spaces or line breaks)arseMB :: GenParser Char st ()
+-- Parsing Mid breaks within the file (In terms of spaces or line breaks)
+
+parseMB :: GenParser Char st ()
 parseMB = spaces <|> parseEOL
 
 parseEOL :: GenParser Char st ()
 parseEOL = eol $> ()
-
 
 parseScheme :: String -> Either ParseError [SchemeExp]
 parseScheme = parse schemeFile "(unknown)"
