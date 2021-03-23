@@ -1,5 +1,6 @@
 import Text.ParserCombinators.Parsec
 import System.Environment
+import Data.Functor
 
 -- This parser handles Scheme mathematical expressions.
 
@@ -40,34 +41,38 @@ arithOps = do
 schemeList :: GenParser Char st SchemeExp
 schemeList = do
   parseMB
-  parseInside
+  do
+    parseExpr <|> parseNum
 
-parseInside :: GenParser Char st SchemeExp
-parseInside = do
+parseExpr :: GenParser Char st SchemeExp
+parseExpr = do
   char '('
   op <- arithOps
   elem <- many1 (parseNum <|> schemeList)
   char ')'
   parseMB
   return (MathExp op elem)
-  <|> parseNum
 
 parseNum :: GenParser Char st SchemeExp
 parseNum = do
-  num <- read <$> many1 digit
+  num <- read <$> (plus <|> minus <|> number)
   parseMB
   return (ScmNumber num)
+  where
+    plus :: GenParser Char st String
+    plus = char '+' *> number
 
--- Parsing Mid breaks within the file (In terms of spaces or line breaks)
-parseMB :: GenParser Char st ()
+    minus :: GenParser Char st String
+    minus = (:) <$> char '-' <*> number
+
+    number :: GenParser Char st String
+    number = many1 digit
+
+-- Parsing Mid breaks within the file (In terms of spaces or line breaks)arseMB :: GenParser Char st ()
 parseMB = spaces <|> parseEOL
 
 parseEOL :: GenParser Char st ()
-parseEOL = do
-  _ <- eol
-  return ()
-  <|>
-  return ()
+parseEOL = eol $> ()
 
 
 parseScheme :: String -> Either ParseError [SchemeExp]
